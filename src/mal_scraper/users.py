@@ -368,18 +368,6 @@ def get_user_anime_list_from_json(json):
     """
     anime = []
     for mal_anime in json:
-        try:
-            start_date = _convert_json_date(mal_anime['start_date_string'])
-        except ParseError as err:
-            err.specify_tag('start_date_string')
-            raise
-
-        try:
-            finish_date = _convert_json_date(mal_anime['finish_date_string'])
-        except ParseError as err:
-            err.specify_tag('finish_date_string')
-            raise
-
         tags = set(
             filter(
                 bool,  # Ignore empty tags
@@ -397,24 +385,67 @@ def get_user_anime_list_from_json(json):
             'consumption_status': ConsumptionStatus.mal_code_to_enum(mal_anime['status']),
             'is_rewatch': bool(mal_anime['is_rewatching']),
             'score': int(mal_anime['score']),
-            'start_date': start_date,
+            'start_date': mal_anime['start_date_string'],
             'progress': int(mal_anime['num_watched_episodes']),
-            'finish_date': finish_date,
+            'finish_date': mal_anime['finish_date_string'],
             'tags': tags,
         })
+
+    date_format = _guess_user_date_format(anime)
+
+    for i, a in enumerate(anime):
+        anime[i]['start_date'] = _convert_json_date(a['start_date'], date_format)
+        anime[i]['finish_date'] =_convert_json_date(a['finish_date'], date_format)
 
     return anime
 
 
-def _convert_json_date(text):
-    """Return the datetime.date object from the JSON anime list date strings.
+def _guess_user_date_format(anime_list):
+    """Return the user's inferred locale date format based on all anime list date strings.
 
     IMPORTANT: There is a problem with determining the locale of the date.
     It varies between users and there doesn't seem to be a way to find out
-    what it is (directly).
+    what it is (directly). As such, this method infers the most likely
+    locale for the user by checking each start_date and end_date in the 
+    user's anime list. It assumes a default of "mm-dd-yy" if both formats
+    are possible. 
 
     Date Examples::
+        12-28-98  # Full date in mm-dd-yy format
+        28-12-98  # Fulll date in dd-mm-yy format  
 
+    Returns:
+        "%d-%m-%y", "%m-%d-%y or None if format is inconsistent.
+
+    Raises:
+        .ParseError: if the text cannot be processed.
+    """
+    first_max = second_max = 1
+
+    for a in anime_list:
+        start, finish = a['start_date'], a['finish_date']
+        if start:
+            first, second = start.split('-')[:2]
+            first_max = max(first_max, int(first))
+            second_max = max(second_max, int(second))
+        
+        if finish:
+            first, second = finish.split('-')[:2]
+            first_max = max(first_max, int(first))
+            second_max = max(second_max, int(second))
+
+    if first_max > 12 and second_max > 12:
+        raise ParseError(f'Inconsistent date format for start_date or finish_date in user anime list')
+    elif first_max > 12:
+        return "%d-%m-%y"
+    else:
+        return "%m-%d-%y"
+
+
+def _convert_json_date(text, date_format="%m-%d-%y"):
+    """Return the datetime.date object from the JSON anime list date strings.
+
+    Examples::
         00-00-98  # Only year is known
         12-00-98  # Year and month is known
         12-28-98  # Full date
@@ -434,8 +465,7 @@ def _convert_json_date(text):
     text = text.replace('00-', '01-')
 
     try:
-        # Or %d-%m-%y
-        return datetime.strptime(text, '%m-%d-%y').date()
+        return datetime.strptime(text, date_format).date()
     except ValueError:  # pragma: no cover
         # It is likely that MAL has changed their format
         raise ParseError('Unable to parse the date text "%s" from an anime list' % text)
