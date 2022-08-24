@@ -36,6 +36,7 @@ lib
 lib64
 venv*/
 pyvenv*/
+Pipfile.lock
 
 # Misc
 .DS_Store

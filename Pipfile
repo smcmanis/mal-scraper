@@ -5,15 +5,17 @@ name = "pypi"
 
 [packages]
 beautifulsoup4 = "*"
-pytest = "*"
-responses = "*"
 requests = "*"
+
+[dev-packages]
+bumpversion = "*"
+responses = "*"
+pytest = "*"
 tox = "*"
 ipython = "*"
 isort = "*"
 pdbpp = "*"
-
-[dev-packages]
+mal-scraper = {editable = true, path = "."}
 
 [requires]
 python_version = "3.10"
