@@ -216,9 +216,9 @@ class TestUserAnimeList(object):
             'consumption_status': mal_scraper.ConsumptionStatus.consuming,
             'is_rewatch': False,
             'score': 0,
-            # 'start_date': None,
+            'start_date': date(year=2015, month=7, day=24),
             'progress': 9,
-            # 'finish_date': None,
+            'finish_date': None,
             'tags': set(),
         }
 

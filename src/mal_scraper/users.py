@@ -115,8 +115,6 @@ def get_user_anime_list(user_id, requester=request_passthrough):
                 'score': (int) 0-10,
                 'progress': (int) 0+ number of episodes watched,
                 'tags': (set of strings) user tags,
-
-                The following tags have been removed for now:
                 'start_date': (date, or None) may be missing,
                 'finish_date': (date, or None) may be missing or not finished,
             }
@@ -355,7 +353,7 @@ def get_user_anime_list_from_json(json):
            "is_added_to_list":false,
            "anime_media_type_string":"TV",
            "anime_mpaa_rating_string":"R",
-           "start_date_string":null,
+           "start_date_string":"22-03-20",
            "finish_date_string":null,
            "anime_start_date_string":"22-03-15",
            "anime_end_date_string":"01-10-16",
@@ -370,18 +368,17 @@ def get_user_anime_list_from_json(json):
     """
     anime = []
     for mal_anime in json:
-        # Start date and finish date removed for now
-        # try:
-        #     start_date = _convert_json_date(mal_anime['start_date_string'])
-        # except ParseError as err:
-        #     err.specify_tag('start_date_string')
-        #     raise
+        try:
+            start_date = _convert_json_date(mal_anime['start_date_string'])
+        except ParseError as err:
+            err.specify_tag('start_date_string')
+            raise
 
-        # try:
-        #     finish_date = _convert_json_date(mal_anime['finish_date_string'])
-        # except ParseError as err:
-        #     err.specify_tag('finish_date_string')
-        #     raise
+        try:
+            finish_date = _convert_json_date(mal_anime['finish_date_string'])
+        except ParseError as err:
+            err.specify_tag('finish_date_string')
+            raise
 
         tags = set(
             filter(
@@ -400,9 +397,9 @@ def get_user_anime_list_from_json(json):
             'consumption_status': ConsumptionStatus.mal_code_to_enum(mal_anime['status']),
             'is_rewatch': bool(mal_anime['is_rewatching']),
             'score': int(mal_anime['score']),
-            # 'start_date': start_date,
+            'start_date': start_date,
             'progress': int(mal_anime['num_watched_episodes']),
-            # 'finish_date': finish_date,
+            'finish_date': finish_date,
             'tags': tags,
         })
 
