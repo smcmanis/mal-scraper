@@ -18,4 +18,3 @@ pdbpp = "*"
 mal-scraper = {editable = true, path = "."}
 
 [requires]
-python_version = "3.10"
